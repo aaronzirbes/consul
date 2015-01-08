@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/hashicorp/consul/consul"
@@ -561,15 +562,17 @@ func (a *Agent) purgeCheck(checkID string) error {
 // AddService is used to add a service entry.
 // This entry is persistent and the agent will make a best effort to
 // ensure it is registered
-func (a *Agent) AddService(service *structs.NodeService, chkType *CheckType, persist bool) error {
+func (a *Agent) AddService(service *structs.NodeService, chkTypes CheckTypes, persist bool) error {
 	if service.Service == "" {
 		return fmt.Errorf("Service name missing")
 	}
 	if service.ID == "" && service.Service != "" {
 		service.ID = service.Service
 	}
-	if chkType != nil && !chkType.Valid() {
-		return fmt.Errorf("Check type is not valid")
+	for _, check := range chkTypes {
+		if !check.Valid() {
+			return fmt.Errorf("Check type is not valid")
+		}
 	}
 
 	// Add the service
@@ -583,10 +586,10 @@ func (a *Agent) AddService(service *structs.NodeService, chkType *CheckType, per
 	}
 
 	// Create an associated health check
-	if chkType != nil {
+	for i, chkType := range chkTypes {
 		check := &structs.HealthCheck{
 			Node:        a.config.NodeName,
-			CheckID:     fmt.Sprintf("service:%s", service.ID),
+			CheckID:     fmt.Sprintf("service:%s:%d", service.ID, i+1),
 			Name:        fmt.Sprintf("Service '%s' check", service.Service),
 			Status:      structs.HealthCritical,
 			Notes:       chkType.Notes,
@@ -621,9 +624,13 @@ func (a *Agent) RemoveService(serviceID string, persist bool) error {
 	}
 
 	// Deregister any associated health checks
-	checkID := fmt.Sprintf("service:%s", serviceID)
-	if err := a.RemoveCheck(checkID, persist); err != nil {
-		return err
+	for checkID, _ := range a.state.Checks() {
+		if !strings.HasPrefix(checkID, fmt.Sprintf("service:%s:", serviceID)) {
+			continue
+		}
+		if err := a.RemoveCheck(checkID, persist); err != nil {
+			return err
+		}
 	}
 
 	log.Printf("[DEBUG] agent: removed service %q", serviceID)
@@ -819,8 +826,8 @@ func (a *Agent) loadServices(conf *Config) error {
 	// Register the services from config
 	for _, service := range conf.Services {
 		ns := service.NodeService()
-		chkType := service.CheckType()
-		if err := a.AddService(ns, chkType, false); err != nil {
+		chkTypes := service.CheckTypes()
+		if err := a.AddService(ns, chkTypes, false); err != nil {
 			return fmt.Errorf("Failed to register service '%s': %v", service.ID, err)
 		}
 	}

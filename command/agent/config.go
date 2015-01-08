@@ -563,7 +563,6 @@ func DecodeConfig(r io.Reader) (*Config, error) {
 
 // DecodeServiceDefinition is used to decode a service definition
 func DecodeServiceDefinition(raw interface{}) (*ServiceDefinition, error) {
-	var sub interface{}
 	rawMap, ok := raw.(map[string]interface{})
 	if !ok {
 		goto AFTER_FIX
@@ -577,16 +576,22 @@ func DecodeServiceDefinition(raw interface{}) (*ServiceDefinition, error) {
 	}
 
 	for k, v := range rawMap {
-		if strings.ToLower(k) == "check" {
-			sub = v
-			break
+		switch strings.ToLower(k) {
+		case "check":
+			if err := FixupCheckType(v); err != nil {
+				return nil, err
+			}
+		case "checks":
+			chkTypes, ok := v.([]interface{})
+			if !ok {
+				goto AFTER_FIX
+			}
+			for _, chkType := range chkTypes {
+				if err := FixupCheckType(chkType); err != nil {
+					return nil, err
+				}
+			}
 		}
-	}
-	if sub == nil {
-		goto AFTER_FIX
-	}
-	if err := FixupCheckType(sub); err != nil {
-		return nil, err
 	}
 AFTER_FIX:
 	var md mapstructure.Metadata

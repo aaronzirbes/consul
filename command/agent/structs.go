@@ -12,6 +12,7 @@ type ServiceDefinition struct {
 	Address string
 	Port    int
 	Check   CheckType
+	Checks  CheckTypes
 }
 
 func (s *ServiceDefinition) NodeService() *structs.NodeService {
@@ -28,11 +29,14 @@ func (s *ServiceDefinition) NodeService() *structs.NodeService {
 	return ns
 }
 
-func (s *ServiceDefinition) CheckType() *CheckType {
-	if s.Check.Script == "" && s.Check.Interval == 0 && s.Check.TTL == 0 {
-		return nil
+func (s *ServiceDefinition) CheckTypes() (checks CheckTypes) {
+	s.Checks = append(s.Checks, &s.Check)
+	for _, check := range s.Checks {
+		if (check.Script != "" && check.Interval != 0) || check.TTL != 0 {
+			checks = append(checks, check)
+		}
 	}
-	return &s.Check
+	return
 }
 
 // ChecKDefinition is used to JSON decode the Check definitions
