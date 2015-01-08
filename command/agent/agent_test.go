@@ -145,11 +145,17 @@ func TestAgent_AddService(t *testing.T) {
 		Tags:    []string{"foo"},
 		Port:    8000,
 	}
-	chk := &CheckType{
-		TTL:   time.Minute,
-		Notes: "redis health check",
+	chkTypes := CheckTypes{
+		&CheckType{
+			TTL:   time.Minute,
+			Notes: "redis health check 1",
+		},
+		&CheckType{
+			TTL:   30 * time.Second,
+			Notes: "redis heath check 2",
+		},
 	}
-	err := agent.AddService(srv, chk, false)
+	err := agent.AddService(srv, chkTypes, false)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -159,18 +165,27 @@ func TestAgent_AddService(t *testing.T) {
 		t.Fatalf("missing redis service")
 	}
 
-	// Ensure we have a check mapping
-	if _, ok := agent.state.Checks()["service:redis"]; !ok {
-		t.Fatalf("missing redis check")
+	// Ensure both checks were added
+	if _, ok := agent.state.Checks()["service:redis:1"]; !ok {
+		t.Fatalf("missing redis:1 check")
+	}
+	if _, ok := agent.state.Checks()["service:redis:2"]; !ok {
+		t.Fatalf("missing redis:2 check")
 	}
 
 	// Ensure a TTL is setup
-	if _, ok := agent.checkTTLs["service:redis"]; !ok {
-		t.Fatalf("missing redis check ttl")
+	if _, ok := agent.checkTTLs["service:redis:1"]; !ok {
+		t.Fatalf("missing redis:1 check ttl")
+	}
+	if _, ok := agent.checkTTLs["service:redis:2"]; !ok {
+		t.Fatalf("missing redis:2 check ttl")
 	}
 
 	// Ensure the notes are passed through
-	if agent.state.Checks()["service:redis"].Notes == "" {
+	if agent.state.Checks()["service:redis:1"].Notes == "" {
+		t.Fatalf("missing redis check notes")
+	}
+	if agent.state.Checks()["service:redis:2"].Notes == "" {
 		t.Fatalf("missing redis check notes")
 	}
 }
@@ -195,8 +210,11 @@ func TestAgent_RemoveService(t *testing.T) {
 		Service: "redis",
 		Port:    8000,
 	}
-	chk := &CheckType{TTL: time.Minute}
-	if err := agent.AddService(srv, chk, false); err != nil {
+	chkTypes := CheckTypes{
+		&CheckType{TTL: time.Minute},
+		&CheckType{TTL: 30 * time.Second},
+	}
+	if err := agent.AddService(srv, chkTypes, false); err != nil {
 		t.Fatalf("err: %v", err)
 	}
 
@@ -210,14 +228,20 @@ func TestAgent_RemoveService(t *testing.T) {
 		t.Fatalf("have redis service")
 	}
 
-	// Ensure we have a check mapping
-	if _, ok := agent.state.Checks()["service:redis"]; ok {
-		t.Fatalf("have redis check")
+	// Ensure checks were removed
+	if _, ok := agent.state.Checks()["service:redis:1"]; ok {
+		t.Fatalf("check redis:1 should be removed")
+	}
+	if _, ok := agent.state.Checks()["service:redis:2"]; ok {
+		t.Fatalf("check redis:2 should be removed")
 	}
 
 	// Ensure a TTL is setup
-	if _, ok := agent.checkTTLs["service:redis"]; ok {
-		t.Fatalf("have redis check ttl")
+	if _, ok := agent.checkTTLs["service:redis:1"]; ok {
+		t.Fatalf("check ttl for redis:1 should be removed")
+	}
+	if _, ok := agent.checkTTLs["service:redis:2"]; ok {
+		t.Fatalf("check ttl for redis:2 should be removed")
 	}
 }
 

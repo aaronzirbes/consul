@@ -446,11 +446,11 @@ func TestHTTPAgentRegisterService(t *testing.T) {
 	}
 
 	// Ensure we have a check mapping
-	if _, ok := srv.agent.state.Checks()["service:test"]; !ok {
+	if _, ok := srv.agent.state.Checks()["service:test:1"]; !ok {
 		t.Fatalf("missing test check")
 	}
 
-	if _, ok := srv.agent.checkTTLs["service:test"]; !ok {
+	if _, ok := srv.agent.checkTTLs["service:test:1"]; !ok {
 		t.Fatalf("missing test check ttl")
 	}
 }
