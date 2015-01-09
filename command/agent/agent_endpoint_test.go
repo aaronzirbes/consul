@@ -450,7 +450,7 @@ func TestHTTPAgentRegisterService(t *testing.T) {
 		t.Fatalf("missing test check")
 	}
 
-	if _, ok := srv.agent.checkTTLs["service:test:1"]; !ok {
+	if _, ok := srv.agent.checkTTLs["service:test"]; !ok {
 		t.Fatalf("missing test check ttl")
 	}
 }
