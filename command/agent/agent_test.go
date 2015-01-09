@@ -645,12 +645,10 @@ func TestAgent_PersistCheck(t *testing.T) {
 	defer agent.Shutdown()
 
 	check := &structs.HealthCheck{
-		Node:        config.NodeName,
-		CheckID:     "service:redis1",
-		Name:        "redischeck",
-		Status:      structs.HealthPassing,
-		ServiceID:   "redis",
-		ServiceName: "redis",
+		Node:    config.NodeName,
+		CheckID: "mem",
+		Name:    "memory check",
+		Status:  structs.HealthPassing,
 	}
 	chkType := &CheckType{
 		Script:   "/bin/true",
@@ -718,12 +716,10 @@ func TestAgent_PurgeCheck(t *testing.T) {
 	defer agent.Shutdown()
 
 	check := &structs.HealthCheck{
-		Node:        config.NodeName,
-		CheckID:     "service:redis1",
-		Name:        "redischeck",
-		Status:      structs.HealthPassing,
-		ServiceID:   "redis",
-		ServiceName: "redis",
+		Node:    config.NodeName,
+		CheckID: "mem",
+		Name:    "memory check",
+		Status:  structs.HealthPassing,
 	}
 
 	file := filepath.Join(agent.config.DataDir, checksDir, stringHash(check.CheckID))
@@ -756,12 +752,10 @@ func TestAgent_PurgeCheckOnDuplicate(t *testing.T) {
 	defer agent.Shutdown()
 
 	check1 := &structs.HealthCheck{
-		Node:        config.NodeName,
-		CheckID:     "service:redis1",
-		Name:        "redischeck",
-		Status:      structs.HealthPassing,
-		ServiceID:   "redis",
-		ServiceName: "redis",
+		Node:    config.NodeName,
+		CheckID: "mem",
+		Name:    "memory check",
+		Status:  structs.HealthPassing,
 	}
 
 	// First persist the check
@@ -772,8 +766,8 @@ func TestAgent_PurgeCheckOnDuplicate(t *testing.T) {
 
 	// Start again with the check registered in config
 	check2 := &CheckDefinition{
-		ID:    "service:redis1",
-		Name:  "redischeck",
+		ID:    "mem",
+		Name:  "memory check",
 		Notes: "my cool notes",
 		CheckType: CheckType{
 			Script:   "/bin/check-redis.py",
@@ -808,16 +802,26 @@ func TestAgent_unloadChecks(t *testing.T) {
 	defer os.RemoveAll(dir)
 	defer agent.Shutdown()
 
+	// First register a service
+	svc := &structs.NodeService{
+		ID:      "redis",
+		Service: "redis",
+		Tags:    []string{"foo"},
+		Port:    8000,
+	}
+	if err := agent.AddService(svc, nil, false); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Register a check
 	check1 := &structs.HealthCheck{
 		Node:        config.NodeName,
-		CheckID:     "service:redis1",
+		CheckID:     "service:redis",
 		Name:        "redischeck",
 		Status:      structs.HealthPassing,
 		ServiceID:   "redis",
 		ServiceName: "redis",
 	}
-
-	// Register the check
 	if err := agent.AddCheck(check1, nil, false); err != nil {
 		t.Fatalf("err: %s", err)
 	}
