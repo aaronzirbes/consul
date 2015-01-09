@@ -67,7 +67,7 @@ func TestAgent_Services(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	if _, ok := checks["service:foo"]; !ok {
+	if _, ok := checks["service:foo:1"]; !ok {
 		t.Fatalf("missing check: %v", checks)
 	}
 
@@ -92,7 +92,7 @@ func TestAgent_SetTTLStatus(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 
-	if err := agent.WarnTTL("service:foo", "test"); err != nil {
+	if err := agent.WarnTTL("service:foo:1", "test"); err != nil {
 		t.Fatalf("err: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func TestAgent_SetTTLStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	chk, ok := checks["service:foo"]
+	chk, ok := checks["service:foo:1"]
 	if !ok {
 		t.Fatalf("missing check: %v", checks)
 	}
