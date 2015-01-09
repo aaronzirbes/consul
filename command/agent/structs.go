@@ -44,16 +44,18 @@ type CheckDefinition struct {
 	ID        string
 	Name      string
 	Notes     string
+	ServiceID string
 	CheckType `mapstructure:",squash"`
 }
 
 func (c *CheckDefinition) HealthCheck(node string) *structs.HealthCheck {
 	health := &structs.HealthCheck{
-		Node:    node,
-		CheckID: c.ID,
-		Name:    c.Name,
-		Status:  structs.HealthCritical,
-		Notes:   c.Notes,
+		Node:      node,
+		CheckID:   c.ID,
+		Name:      c.Name,
+		Status:    structs.HealthCritical,
+		Notes:     c.Notes,
+		ServiceID: c.ServiceID,
 	}
 	if health.CheckID == "" && health.Name != "" {
 		health.CheckID = health.Name

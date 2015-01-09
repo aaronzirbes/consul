@@ -610,22 +610,23 @@ AFTER_FIX:
 }
 
 func FixupCheckType(raw interface{}) error {
+	var ttlKey, intervalKey string
+
 	// Handle decoding of time durations
 	rawMap, ok := raw.(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
-	var ttlKey string
-	for k, _ := range rawMap {
-		if strings.ToLower(k) == "ttl" {
+	for k, v := range rawMap {
+		switch strings.ToLower(k) {
+		case "ttl":
 			ttlKey = k
-		}
-	}
-	var intervalKey string
-	for k, _ := range rawMap {
-		if strings.ToLower(k) == "interval" {
+		case "interval":
 			intervalKey = k
+		case "service_id":
+			rawMap["serviceid"] = v
+			delete(rawMap, "service_id")
 		}
 	}
 
