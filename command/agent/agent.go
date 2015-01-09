@@ -629,7 +629,8 @@ func (a *Agent) RemoveService(serviceID string, persist bool) error {
 
 	// Deregister any associated health checks
 	for checkID, _ := range a.state.Checks() {
-		if !strings.HasPrefix(checkID, fmt.Sprintf("service:%s:", serviceID)) {
+		prefix := "service:" + serviceID
+		if checkID != prefix && !strings.HasPrefix(checkID, prefix+":") {
 			continue
 		}
 		if err := a.RemoveCheck(checkID, persist); err != nil {
