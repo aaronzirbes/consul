@@ -242,16 +242,36 @@ func TestAgent_RemoveService(t *testing.T) {
 		t.Fatalf("should have errored")
 	}
 
+	// Removing a service with a single check works
 	srv := &structs.NodeService{
 		ID:      "redis",
 		Service: "redis",
 		Port:    8000,
 	}
-	chkTypes := CheckTypes{
+	chkTypes := CheckTypes{&CheckType{TTL: time.Minute}}
+
+	if err := agent.AddService(srv, chkTypes, false); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	if err := agent.RemoveService("redis", false); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if _, ok := agent.state.Checks()["service:redis"]; ok {
+		t.Fatalf("have redis check")
+	}
+
+	// Removing a service with multiple checks works
+	srv2 := &structs.NodeService{
+		ID:      "redis",
+		Service: "redis",
+		Port:    8000,
+	}
+	chkTypes2 := CheckTypes{
 		&CheckType{TTL: time.Minute},
 		&CheckType{TTL: 30 * time.Second},
 	}
-	if err := agent.AddService(srv, chkTypes, false); err != nil {
+	if err := agent.AddService(srv2, chkTypes2, false); err != nil {
 		t.Fatalf("err: %v", err)
 	}
 
