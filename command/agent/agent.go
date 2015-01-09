@@ -587,9 +587,13 @@ func (a *Agent) AddService(service *structs.NodeService, chkTypes CheckTypes, pe
 
 	// Create an associated health check
 	for i, chkType := range chkTypes {
+		checkID := fmt.Sprintf("service:%s", service.ID)
+		if len(chkTypes) > 1 {
+			checkID += fmt.Sprintf(":%d", i+1)
+		}
 		check := &structs.HealthCheck{
 			Node:        a.config.NodeName,
-			CheckID:     fmt.Sprintf("service:%s:%d", service.ID, i+1),
+			CheckID:     checkID,
 			Name:        fmt.Sprintf("Service '%s' check", service.Service),
 			Status:      structs.HealthCritical,
 			Notes:       chkType.Notes,

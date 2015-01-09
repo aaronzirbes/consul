@@ -148,10 +148,6 @@ func TestAgent_AddService(t *testing.T) {
 	chkTypes := CheckTypes{
 		&CheckType{
 			TTL:   time.Minute,
-			Notes: "redis health check 1",
-		},
-		&CheckType{
-			TTL:   30 * time.Second,
 			Notes: "redis heath check 2",
 		},
 	}
@@ -165,27 +161,68 @@ func TestAgent_AddService(t *testing.T) {
 		t.Fatalf("missing redis service")
 	}
 
-	// Ensure both checks were added
-	if _, ok := agent.state.Checks()["service:redis:1"]; !ok {
-		t.Fatalf("missing redis:1 check")
-	}
-	if _, ok := agent.state.Checks()["service:redis:2"]; !ok {
-		t.Fatalf("missing redis:2 check")
+	// Ensure the check is registered
+	if _, ok := agent.state.Checks()["service:redis"]; !ok {
+		t.Fatalf("missing redis check")
 	}
 
 	// Ensure a TTL is setup
-	if _, ok := agent.checkTTLs["service:redis:1"]; !ok {
-		t.Fatalf("missing redis:1 check ttl")
-	}
-	if _, ok := agent.checkTTLs["service:redis:2"]; !ok {
-		t.Fatalf("missing redis:2 check ttl")
+	if _, ok := agent.checkTTLs["service:redis"]; !ok {
+		t.Fatalf("missing redis check ttl")
 	}
 
 	// Ensure the notes are passed through
-	if agent.state.Checks()["service:redis:1"].Notes == "" {
+	if agent.state.Checks()["service:redis"].Notes == "" {
 		t.Fatalf("missing redis check notes")
 	}
-	if agent.state.Checks()["service:redis:2"].Notes == "" {
+
+	// Register a service with multiple checks
+	srv2 := &structs.NodeService{
+		ID:      "memcache",
+		Service: "memcache",
+		Tags:    []string{"bar"},
+		Port:    8000,
+	}
+	chkTypes2 := CheckTypes{
+		&CheckType{
+			TTL:   time.Minute,
+			Notes: "memcache health check 1",
+		},
+		&CheckType{
+			TTL:   time.Second,
+			Notes: "memcache heath check 2",
+		},
+	}
+	if err := agent.AddService(srv2, chkTypes2, false); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Ensure we have a state mapping
+	if _, ok := agent.state.Services()["memcache"]; !ok {
+		t.Fatalf("missing memcache service")
+	}
+
+	// Ensure both checks were added
+	if _, ok := agent.state.Checks()["service:memcache:1"]; !ok {
+		t.Fatalf("missing memcache:1 check")
+	}
+	if _, ok := agent.state.Checks()["service:memcache:2"]; !ok {
+		t.Fatalf("missing memcache:2 check")
+	}
+
+	// Ensure a TTL is setup
+	if _, ok := agent.checkTTLs["service:memcache:1"]; !ok {
+		t.Fatalf("missing memcache:1 check ttl")
+	}
+	if _, ok := agent.checkTTLs["service:memcache:2"]; !ok {
+		t.Fatalf("missing memcache:2 check ttl")
+	}
+
+	// Ensure the notes are passed through
+	if agent.state.Checks()["service:memcache:1"].Notes == "" {
+		t.Fatalf("missing redis check notes")
+	}
+	if agent.state.Checks()["service:memcache:2"].Notes == "" {
 		t.Fatalf("missing redis check notes")
 	}
 }
