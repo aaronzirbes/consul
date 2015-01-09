@@ -375,6 +375,27 @@ func TestAgent_AddCheck_MinInterval(t *testing.T) {
 	}
 }
 
+func TestAgent_AddCheck_MissingService(t *testing.T) {
+	dir, agent := makeAgent(t, nextConfig())
+	defer os.RemoveAll(dir)
+	defer agent.Shutdown()
+
+	health := &structs.HealthCheck{
+		Node:      "foo",
+		CheckID:   "baz",
+		Name:      "baz check 1",
+		ServiceID: "baz",
+	}
+	chk := &CheckType{
+		Script:   "exit 0",
+		Interval: time.Microsecond,
+	}
+	err := agent.AddCheck(health, chk, false)
+	if err == nil || err.Error() != `ServiceID "baz" does not exist` {
+		t.Fatalf("expected service id error, got: %v", err)
+	}
+}
+
 func TestAgent_RemoveCheck(t *testing.T) {
 	dir, agent := makeAgent(t, nextConfig())
 	defer os.RemoveAll(dir)

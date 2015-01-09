@@ -654,6 +654,14 @@ func (a *Agent) AddCheck(check *structs.HealthCheck, chkType *CheckType, persist
 		return fmt.Errorf("Check type is not valid")
 	}
 
+	if check.ServiceID != "" {
+		svc, ok := a.state.Services()[check.ServiceID]
+		if !ok {
+			return fmt.Errorf("ServiceID %q does not exist", check.ServiceID)
+		}
+		check.ServiceName = svc.Service
+	}
+
 	a.checkLock.Lock()
 	defer a.checkLock.Unlock()
 
