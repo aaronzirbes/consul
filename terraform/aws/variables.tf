@@ -22,3 +22,7 @@ variable "servers" {
     default = "3"
     description = "The number of Consul servers to launch."
 }
+
+variable "vpc_id" {
+    description = "The AWS VPC to run the consul cluster in."
+}
