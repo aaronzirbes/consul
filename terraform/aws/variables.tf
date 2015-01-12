@@ -24,5 +24,16 @@ variable "servers" {
 }
 
 variable "vpc_id" {
+    default = ""
     description = "The AWS VPC to run the consul cluster in."
+}
+
+variable "subnet_id" {
+    default = ""
+    description = "The VPC subnet to launch the consul cluster in."
+}
+
+variable "availability_zone" {
+    default = ""
+    description = "The availability zone to run the consul cluster in."
 }

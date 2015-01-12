@@ -3,7 +3,10 @@ resource "aws_instance" "server" {
     instance_type = "m1.small"
     key_name = "${var.key_name}"
     count = "${var.servers}"
+
     security_groups = ["${aws_security_group.consul.name}"]
+    subnet_id = "${var.subnet_id}"
+    availability_zone = "${var.availability_zone}"
 
     connection {
         user = "ubuntu"
